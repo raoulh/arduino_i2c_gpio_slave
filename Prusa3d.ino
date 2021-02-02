@@ -1,3 +1,15 @@
+// Copyright: Raoul Hecky
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+//
+//Libraries used:
+// https://github.com/milesburton/Arduino-Temperature-Control-Library.git
+// https://github.com/PaulStoffregen/OneWire
+
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <Wire.h>
@@ -65,10 +77,10 @@ const byte REG_TEMP  = 0x02;
 uint8_t opcode; // register
 
 void receiveEvent(int numBytes)
-{  
+{
     //read register
     opcode = Wire.read();
-  
+
     if (numBytes > 1)
     {
         if (opcode == REG_LIGHT)
