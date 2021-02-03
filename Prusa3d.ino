@@ -34,6 +34,8 @@ uint8_t printerState = HIGH;
 
 void setup()
 {
+//    Serial.begin(115200);
+
     Wire.begin(I2C_ADDR);
     Wire.onReceive(receiveEvent);
     Wire.onRequest(requestEvent);
@@ -82,7 +84,7 @@ void requestTemperature()
 
 const byte REG_LIGHT    = 0x01;
 const byte REG_TEMP     = 0x02;
-const byte REG_PRINTER  = 0x02;
+const byte REG_PRINTER  = 0x03;
 
 uint8_t opcode; // register
 
@@ -110,7 +112,7 @@ void receiveEvent(int numBytes)
 
 union floatBytes
 {
-    uint8_t bytes;
+    uint8_t bytes[4];
     float value; 
 } floatContainer;
 
@@ -126,7 +128,11 @@ void requestEvent()
     }
     else if (opcode == REG_TEMP)
     {
+/*        Serial.print("Read temp: ");
+        Serial.print(temperature);
+        Serial.println("");
+        */
         floatContainer.value = temperature;
-        Wire.write(floatContainer.bytes);
+        Wire.write(floatContainer.bytes, sizeof(float));
     }
 }
