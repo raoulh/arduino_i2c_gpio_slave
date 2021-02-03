@@ -18,6 +18,7 @@ const byte I2C_ADDR = 0x08;
 
 const byte PIN_ONEWIRE = 14;
 const byte PIN_LIGHT = 2;
+const byte PIN_PRINTER = 3;
 
 OneWire ds(PIN_ONEWIRE);
 DallasTemperature sensors(&ds);
@@ -29,6 +30,7 @@ int  delayInMillis = 0;
 float temperature = 0;
 
 uint8_t lightState = HIGH;
+uint8_t printerState = HIGH;
 
 void setup()
 {
@@ -38,6 +40,9 @@ void setup()
 
     pinMode(PIN_LIGHT, OUTPUT);
     digitalWrite(PIN_LIGHT, HIGH);
+
+    pinMode(PIN_PRINTER, OUTPUT);
+    digitalWrite(PIN_PRINTER, HIGH);
 
     sensors.begin();
     //disable blocking code
@@ -51,6 +56,7 @@ void loop()
 {
     requestTemperature();
     digitalWrite(PIN_LIGHT, lightState);
+    digitalWrite(PIN_PRINTER, printerState);
 }
 
 void requestTemperature()
@@ -69,10 +75,14 @@ void requestTemperature()
  * Set Light Off     | Write     | 0x01     | 0
  * Get Light state   | Read      | 0x01     |
  * Get Temp          | Read      | 0x02     |
+ * Set Printer On    | Write     | 0x03     | 1
+ * Set Printer Off   | Write     | 0x03     | 0
+ * Get Printer state | Read      | 0x03     |
  */
 
-const byte REG_LIGHT = 0x01;
-const byte REG_TEMP  = 0x02;
+const byte REG_LIGHT    = 0x01;
+const byte REG_TEMP     = 0x02;
+const byte REG_PRINTER  = 0x02;
 
 uint8_t opcode; // register
 
@@ -89,8 +99,20 @@ void receiveEvent(int numBytes)
             if (data == 0 || data == 1) //discard non valid values
                 lightState = !data;
         }
+        else if (opcode == REG_PRINTER)
+        {
+            uint8_t data = Wire.read();
+            if (data == 0 || data == 1) //discard non valid values
+                printerState = !data;
+        }
     }
 }
+
+union floatBytes
+{
+    uint8_t bytes;
+    float value; 
+} floatContainer;
 
 void requestEvent()
 {
@@ -98,12 +120,13 @@ void requestEvent()
     {
         Wire.write(!lightState);
     }
+    else if (opcode == REG_PRINTER)
+    {
+        Wire.write(!printerState);
+    }
     else if (opcode == REG_TEMP)
     {
-        //Send temp as string
-        char buff[2];
-        buff[0] = temperature;
-        buff[1] = (temperature - buff[0]) * 100.0;
-        Wire.write(buff);
+        floatContainer.value = temperature;
+        Wire.write(floatContainer.bytes);
     }
 }
